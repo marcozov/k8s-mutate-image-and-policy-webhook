@@ -56,11 +56,16 @@ func (wh *mutationWH) applyMutationOnPod(pod corev1.Pod) ([]patchOperation, erro
 		if pod.Spec.InitContainers != nil {
 			for i, c := range pod.Spec.InitContainers {
 				log.Tracef("/spec/initContainers/%d/image = %s", i, c.Image)
+				newRegistry := wh.registry
+				if wh.pathPrefix != "" {
+					newRegistry = fmt.Sprintf("%s/%s", wh.registry, wh.pathPrefix)
+				}
+
 				if !containsRegistry(c.Image, wh.registry) {
 					patches = append(patches, patchOperation{
 						Op:    "replace",
 						Path:  fmt.Sprintf("/spec/initContainers/%d/image", i),
-						Value: replaceRegistryIfSet(c.Image, wh.registry),
+						Value: replaceRegistryIfSet(c.Image, newRegistry),
 					})
 				}
 			}
@@ -69,11 +74,16 @@ func (wh *mutationWH) applyMutationOnPod(pod corev1.Pod) ([]patchOperation, erro
 		if pod.Spec.Containers != nil {
 			for i, c := range pod.Spec.Containers {
 				log.Tracef("/spec/containers/%d/image = %s", i, c.Image)
+				newRegistry := wh.registry
+				if wh.pathPrefix != "" {
+					newRegistry = fmt.Sprintf("%s/%s", wh.registry, wh.pathPrefix)
+				}
+
 				if !containsRegistry(c.Image, wh.registry) {
 					patches = append(patches, patchOperation{
 						Op:    "replace",
 						Path:  fmt.Sprintf("/spec/containers/%d/image", i),
-						Value: replaceRegistryIfSet(c.Image, wh.registry),
+						Value: replaceRegistryIfSet(c.Image, newRegistry),
 					})
 				}
 			}

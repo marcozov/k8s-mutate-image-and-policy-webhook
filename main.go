@@ -14,6 +14,7 @@ type envConfig struct {
 	Port                 string   `envconfig:"PORT" default:"8443"`
 	LogLevel             string   `envconfig:"LOG_LEVEL" default:"info"`
 	Registry             string   `envconfig:"REGISTRY"`
+	PathPrefix           string   `envconfig:"PATH_PREFIX"`
 	ImagePullSecret      string   `envconfig:"IMAGE_PULL_SECRET"`
 	ForceImagePullPolicy bool     `envconfig:"FORCE_IMAGE_PULL_POLICY"`
 	DefaultStorageClass  string   `envconfig:"DEFAULT_STORAGE_CLASS"`
@@ -27,6 +28,7 @@ var (
 
 type mutationWH struct {
 	registry             string
+	pathPrefix           string
 	imagePullSecret      string
 	forceImagePullPolicy bool
 	defaultStorageClass  string
@@ -54,6 +56,7 @@ func main() {
 
 	wh := mutationWH{
 		registry:             env.Registry,
+		pathPrefix:           env.PathPrefix,
 		imagePullSecret:      env.ImagePullSecret,
 		forceImagePullPolicy: env.ForceImagePullPolicy,
 		defaultStorageClass:  env.DefaultStorageClass,

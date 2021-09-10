@@ -310,6 +310,91 @@ func TestImageSkaffold(t *testing.T) {
 	assert.Equal(t, "docker.sqooba.io/sqooba/sqooba-website:32cbc804-dirty@sha256:a4a729d8691ed70eb56cf03053333cf42e8a6c33f6ee67ea862da4459d7f70fd", patches[0].Value)
 }
 
+func TestImageArtifactoryInternal(t *testing.T) {
+
+	wh := mutationWH{
+		registry: "docker.sqooba.io",
+	}
+
+	pod := corev1.Pod{
+		Spec: corev1.PodSpec{
+			Containers: []corev1.Container{
+				{Image: "docker.sqooba.io/local-repo/xyz/image:snapshot"},
+			},
+		},
+	}
+
+	patches, err := wh.applyMutationOnPod(pod)
+	assert.Nil(t, err)
+	assert.Equal(t, 0, len(patches))
+}
+
+func TestImageArtifactoryInternalFullRegistry(t *testing.T) {
+
+	wh := mutationWH{
+		registry:   "docker.sqooba.io",
+		pathPrefix: "public-docker-virtual",
+	}
+
+	pod := corev1.Pod{
+		Spec: corev1.PodSpec{
+			Containers: []corev1.Container{
+				{Image: "docker.sqooba.io/local-repo/xyz/image:snapshot"},
+			},
+		},
+	}
+
+	patches, err := wh.applyMutationOnPod(pod)
+	assert.Nil(t, err)
+	assert.Equal(t, 0, len(patches))
+}
+
+func TestImageArtifactoryExternal(t *testing.T) {
+
+	wh := mutationWH{
+		registry: "docker.sqooba.io/public-docker-virtual",
+	}
+
+	pod := corev1.Pod{
+		Spec: corev1.PodSpec{
+			Containers: []corev1.Container{
+				{Image: "quay.io/argoproj/argocd:v2.0.1"},
+			},
+		},
+	}
+
+	patches, err := wh.applyMutationOnPod(pod)
+	assert.Nil(t, err)
+	assert.Equal(t, 1, len(patches))
+	assert.Equal(t, "replace", patches[0].Op)
+	assert.Equal(t, "/spec/containers/0/image", patches[0].Path)
+	assert.Equal(t, "docker.sqooba.io/public-docker-virtual/argoproj/argocd:v2.0.1", patches[0].Value)
+}
+
+func TestImageArtifactoryExternalPathPrefix(t *testing.T) {
+	logging.SetLogLevel(log, "trace")
+
+	wh := mutationWH{
+		registry:   "docker.sqooba.io",
+		pathPrefix: "public-docker-virtual",
+	}
+
+	pod := corev1.Pod{
+		Spec: corev1.PodSpec{
+			Containers: []corev1.Container{
+				{Image: "quay.io/argoproj/argocd:v2.0.1"},
+			},
+		},
+	}
+
+	patches, err := wh.applyMutationOnPod(pod)
+	assert.Nil(t, err)
+	assert.Equal(t, 1, len(patches))
+	assert.Equal(t, "replace", patches[0].Op)
+	assert.Equal(t, "/spec/containers/0/image", patches[0].Path)
+	assert.Equal(t, "docker.sqooba.io/public-docker-virtual/argoproj/argocd:v2.0.1", patches[0].Value)
+}
+
 func TestImagePullSecretNotPresent(t *testing.T) {
 	logging.SetLogLevel(log, "debug")
 
